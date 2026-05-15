@@ -18,7 +18,7 @@ def home():
 @app.route('/seatmap/<event_id>')
 def seatmap_page(event_id):
     """Serve the interactive seat map page"""
-    return render_template('seatmap.html', event_id=event_id)
+    return render_template('index.html', event_id=event_id)
 
 @app.route('/api/search')
 def search_events():
