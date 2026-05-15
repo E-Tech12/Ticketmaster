@@ -1,37 +1,527 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Tickets</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Interactive Seat Map - Ticket Bot</title>
     <style>
-        body{
-            font-family: Arial;
-            background:#111;
-            color:white;
-            padding:20px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-
-        .card{
-            background:#222;
-            border-radius:10px;
-            padding:15px;
-            margin-bottom:20px;
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
         }
-
-        img{
-            width:100%;
-            border-radius:10px;
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .event-info {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .event-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .event-details {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .stage {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .sections-container {
+            padding: 0 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .section-price {
+            font-size: 14px;
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .seats-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .seat {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .seat.available {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .seat.available:hover {
+            background: #28a745;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .seat.selected {
+            background: #007bff;
+            color: white;
+            border: 1px solid #0056b3;
+            transform: scale(1.02);
+        }
+        
+        .seat.unavailable {
+            background: #f8d7da;
+            color: #721c24;
+            cursor: not-allowed;
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+        
+        .row-label {
+            font-size: 10px;
+            color: #6c757d;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            padding: 15px 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #495057;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+        }
+        
+        .selection-panel {
+            padding: 20px;
+            background: white;
+            border-top: 2px solid #e9ecef;
+        }
+        
+        #selection-status {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .confirm-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .confirm-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .confirm-btn:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @media (max-width: 500px) {
+            .seats-grid {
+                gap: 5px;
+            }
+            .seat {
+                padding: 6px 2px;
+                font-size: 9px;
+            }
+            .section-title {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
-
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>🎟️ Interactive Seat Map</h1>
+            <p>Click on available seats to select</p>
+        </div>
+        
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading seat map...</p>
+            </div>
+        </div>
+    </div>
 
-<h1>Available Events</h1>
-
-<div id="events"></div>
-
-<script src="/static/app.js"></script>
-
+    <script>
+        let selectedSeats = [];
+        let seatmapData = null;
+        let maxSeats = 4;
+        
+        // Get event ID from URL
+        const eventId = window.location.pathname.split('/').pop();
+        
+        // Load seatmap data
+        async function loadSeatmap() {
+            try {
+                const response = await fetch(`/api/seatmap/${eventId}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                seatmapData = data;
+                maxSeats = data.max_seats || 4;
+                renderSeatmap();
+            } catch (error) {
+                console.error('Error loading seatmap:', error);
+                showError('Failed to load seat map. Please try again.');
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('content').innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <p style="color: #dc3545; margin-bottom: 15px;">❌ ${message}</p>
+                    <button onclick="window.TelegramWebApp.close()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px;">
+                        Close
+                    </button>
+                </div>
+            `;
+        }
+        
+        function renderSeatmap() {
+            const html = `
+                <div class="event-info">
+                    <div class="event-name">${escapeHtml(seatmapData.event_name)}</div>
+                    <div class="event-details">📍 ${escapeHtml(seatmapData.venue)}</div>
+                </div>
+                
+                <div class="stage">
+                    🎤 STAGE 🎤
+                </div>
+                
+                <div class="sections-container" id="sections-container">
+                    ${renderSections()}
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #d4edda; border: 1px solid #c3e6cb;"></div>
+                        <span>Available</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #007bff;"></div>
+                        <span>Selected</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f8d7da; border: 1px solid #f5c6cb;"></div>
+                        <span>Taken</span>
+                    </div>
+                </div>
+                
+                <div class="selection-panel">
+                    <div id="selection-status">No seats selected</div>
+                    <button class="confirm-btn" id="confirm-btn" disabled>Confirm Selection</button>
+                </div>
+            `;
+            
+            document.getElementById('content').innerHTML = html;
+            
+            // Attach click handlers after rendering
+            attachSeatHandlers();
+        }
+        
+        function renderSections() {
+            let sectionsHtml = '';
+            
+            for (const section of seatmapData.sections) {
+                sectionsHtml += `
+                    <div class="section">
+                        <div class="section-header">
+                            <div class="section-title">Section ${section.name}</div>
+                            <div class="section-price">$${section.price}</div>
+                        </div>
+                        <div class="seats-grid" data-section="${section.name}" id="section-${section.name}">
+                            ${renderSeats(section)}
+                        </div>
+                        <div class="row-label">Row A → H</div>
+                    </div>
+                `;
+            }
+            
+            return sectionsHtml;
+        }
+        
+        function renderSeats(section) {
+            const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+            let seatsHtml = '';
+            
+            for (const row of rows) {
+                for (let seatNum = 1; seatNum <= 8; seatNum++) {
+                    const seatId = `${section.name}-${row}${seatNum}`;
+                    const isTaken = section.taken_seats && section.taken_seats.includes(seatId);
+                    const isSelected = selectedSeats.includes(seatId);
+                    
+                    let seatClass = 'seat';
+                    if (isTaken) {
+                        seatClass += ' unavailable';
+                    } else if (isSelected) {
+                        seatClass += ' selected';
+                    } else {
+                        seatClass += ' available';
+                    }
+                    
+                    seatsHtml += `
+                        <div class="${seatClass}" 
+                             data-seat-id="${seatId}"
+                             data-section="${section.name}"
+                             data-row="${row}"
+                             data-seat="${seatNum}">
+                            ${row}${seatNum}
+                        </div>
+                    `;
+                }
+            }
+            
+            return seatsHtml;
+        }
+        
+        function attachSeatHandlers() {
+            const seats = document.querySelectorAll('.seat.available, .seat.selected');
+            seats.forEach(seat => {
+                seat.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const seatId = seat.getAttribute('data-seat-id');
+                    toggleSeat(seatId);
+                });
+            });
+        }
+        
+        function toggleSeat(seatId) {
+            const index = selectedSeats.indexOf(seatId);
+            
+            if (index === -1) {
+                // Add seat
+                if (selectedSeats.length >= maxSeats) {
+                    showToast(`You can only select up to ${maxSeats} seats`);
+                    return;
+                }
+                selectedSeats.push(seatId);
+            } else {
+                // Remove seat
+                selectedSeats.splice(index, 1);
+            }
+            
+            // Re-render to update UI
+            renderSeatmap();
+            updateStatus();
+        }
+        
+        function updateStatus() {
+            const statusDiv = document.getElementById('selection-status');
+            const confirmBtn = document.getElementById('confirm-btn');
+            
+            if (selectedSeats.length === 0) {
+                statusDiv.innerHTML = '🎯 No seats selected. Click on green seats to choose.';
+                statusDiv.style.background = '#f8f9fa';
+                confirmBtn.disabled = true;
+            } else {
+                const seatNumbers = selectedSeats.map(s => s.split('-')[1]).join(', ');
+                statusDiv.innerHTML = `✅ Selected: ${seatNumbers} (${selectedSeats.length} seat${selectedSeats.length > 1 ? 's' : ''})`;
+                statusDiv.style.background = '#d4edda';
+                confirmBtn.disabled = false;
+            }
+        }
+        
+        function showToast(message) {
+            // Simple alert - in production, use a better toast notification
+            alert(message);
+        }
+        
+        function confirmSelection() {
+            if (selectedSeats.length === 0) {
+                showToast('Please select at least one seat');
+                return;
+            }
+            
+            // Parse seat details
+            const firstSeat = selectedSeats[0];
+            const match = firstSeat.match(/([A-Z0-9]+)-([A-Z])(\d+)/);
+            
+            if (!match) {
+                showToast('Error parsing seat selection');
+                return;
+            }
+            
+            const selection = {
+                section: match[1],
+                row: match[2],
+                seats: selectedSeats.map(s => {
+                    const parts = s.split('-')[1];
+                    return parts;
+                }),
+                quantity: selectedSeats.length,
+                seats_full: selectedSeats
+            };
+            
+            // Send back to Telegram bot
+            if (window.TelegramWebApp) {
+                window.TelegramWebApp.sendData(JSON.stringify(selection));
+                window.TelegramWebApp.close();
+            } else {
+                // For testing in browser
+                console.log('Selection:', selection);
+                alert('Demo Mode: ' + JSON.stringify(selection, null, 2));
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Initialize Telegram Web App
+        if (window.TelegramWebApp) {
+            window.TelegramWebApp.ready();
+            window.TelegramWebApp.expand();
+        }
+        
+        // Load seatmap on page load
+        document.addEventListener('DOMContentLoaded', loadSeatmap);
+        
+        // Add confirm button handler with event delegation
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'confirm-btn') {
+                confirmSelection();
+            }
+        });
+    </script>
 </body>
 </html>
